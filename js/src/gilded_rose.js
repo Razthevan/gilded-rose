@@ -1,3 +1,4 @@
+const SULFURAS_QUALITY = 80;
 const MAX_QUALITY_VALUE = 50;
 const BACKSTAGE_PASS_INCREASE_QUALITY_BY_TWO_THRESHOLD = 11;
 const BACKSTAGE_PASS_INCREASE_QUALITY_BY_THREE_THRESHOLD = 6;
@@ -12,61 +13,71 @@ function Item(name, sell_in, quality) {
   this.name = name;
   // Number of days available to sell the item
   this.sell_in = sell_in;
-  // The value of the item
+  // The quality of the item
   this.quality = quality;
 }
 
 var items = [];
 
-function update_quality() {
-  for (var i = 0; i < items.length; i++) {
-    if (items[i].name != AGED_BRIE && items[i].name != BACKSTAGE_PASS) {
-      if (items[i].quality > 0) {
-        if (items[i].name != SULFURAS) {
-          items[i].quality = items[i].quality - 1;
-        }
-      }
-    } else {
-      if (items[i].quality < MAX_QUALITY_VALUE) {
-        items[i].quality = items[i].quality + 1;
-        if (items[i].name == BACKSTAGE_PASS) {
-          if (
-            items[i].sell_in < BACKSTAGE_PASS_INCREASE_QUALITY_BY_TWO_THRESHOLD
-          ) {
-            if (items[i].quality < MAX_QUALITY_VALUE) {
-              items[i].quality = items[i].quality + 1;
-            }
-          }
-          if (
-            items[i].sell_in <
-            BACKSTAGE_PASS_INCREASE_QUALITY_BY_THREE_THRESHOLD
-          ) {
-            if (items[i].quality < MAX_QUALITY_VALUE) {
-              items[i].quality = items[i].quality + 1;
-            }
-          }
-        }
-      }
+const update_quality = () =>
+  items.map((item) => {
+    // The quality of Sulfuras is always 80 and it's sell in property never changes
+    if (item.name == SULFURAS) {
+      item.quality = SULFURAS_QUALITY;
+      return;
     }
-    if (items[i].name != SULFURAS) {
-      items[i].sell_in = items[i].sell_in - 1;
+
+    // Decrease the sell in property value for all other items
+    item.sell_in = item.sell_in - 1;
+
+    // Increase the value of the Aged Brie's quality by 1 but never over 50
+    if (item.name == AGED_BRIE) {
+      item.quality =
+        item.quality < MAX_QUALITY_VALUE ? item.quality + 1 : item.quality;
+      return;
     }
-    if (items[i].sell_in < 0) {
-      if (items[i].name != AGED_BRIE) {
-        if (items[i].name != BACKSTAGE_PASS) {
-          if (items[i].quality > 0) {
-            if (items[i].name != SULFURAS) {
-              items[i].quality = items[i].quality - 1;
-            }
-          }
-        } else {
-          items[i].quality = items[i].quality - items[i].quality;
-        }
-      } else {
-        if (items[i].quality < MAX_QUALITY_VALUE) {
-          items[i].quality = items[i].quality + 1;
-        }
-      }
+
+    if (item.name == BACKSTAGE_PASS) {
+      item.quality = getBackstagePassUpdatedQuality(item.quality, item.sell_in);
+      return;
     }
+
+    // Handle the quality property for regular items
+    item.quality = getRegularItemUpdatedQuality(item.quality, item.sell_in);
+  });
+
+const getBackstagePassUpdatedQuality = (quality, sellIn) => {
+  // Drop the quality to  0 after the concert
+  if (sellIn < 0) {
+    return 0;
   }
-}
+
+  // Increase the quality of the Backstage pass by 3 when there are 5 days or less left until the concert
+  if (sellIn < BACKSTAGE_PASS_INCREASE_QUALITY_BY_THREE_THRESHOLD) {
+    let updatedQuality = quality + 3;
+    return updatedQuality >= MAX_QUALITY_VALUE
+      ? MAX_QUALITY_VALUE
+      : updatedQuality;
+  }
+
+  // Increase the quality of the Backstage pass by 2 when there are 10 days or less left until the concert
+  if (sellIn < BACKSTAGE_PASS_INCREASE_QUALITY_BY_TWO_THRESHOLD) {
+    let updatedQuality = quality + 2;
+    return updatedQuality >= MAX_QUALITY_VALUE
+      ? MAX_QUALITY_VALUE
+      : updatedQuality;
+  }
+
+  // Increase the quality of the Backstage pass by 1 when there are more than 10 days left until the concert
+  return quality + 1;
+};
+
+const getRegularItemUpdatedQuality = (quality, sellIn) => {
+  // If the quality is already 0, do not modify it
+  if (!quality) {
+    return quality;
+  }
+
+  // If the sell in date has passed, decrease the value by 2 otherwise decrease it by 1
+  return sellIn < 0 ? quality - 2 : quality - 1;
+};
