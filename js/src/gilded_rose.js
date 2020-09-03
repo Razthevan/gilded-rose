@@ -6,6 +6,7 @@ const BACKSTAGE_PASS_INCREASE_QUALITY_BY_THREE_THRESHOLD = 6;
 // Items with special rules
 const AGED_BRIE = "Aged Brie";
 const SULFURAS = "Sulfuras, Hand of Ragnaros";
+const CONJURED_MANA_CAKE = "Conjured Mana Cake";
 const BACKSTAGE_PASS = "Backstage passes to a TAFKAL80ETC concert";
 
 function Item(name, sell_in, quality) {
@@ -42,9 +43,35 @@ const update_quality = () =>
       return;
     }
 
+    if (item.name == CONJURED_MANA_CAKE) {
+      item.quality = getConjuredItemsUpdatedQuality(item.quality, item.sell_in);
+      return;
+    }
+
     // Handle the quality property for regular items
     item.quality = getRegularItemUpdatedQuality(item.quality, item.sell_in);
   });
+
+// Helpers
+
+const getRegularItemUpdatedQuality = (quality, sellIn) => {
+  // If the quality is already 0, do not modify it
+  if (!quality) {
+    return quality;
+  }
+
+  // If the sell in date has passed, decrease the value by 2 otherwise decrease it by 1
+  return sellIn < 0 ? quality - 2 : quality - 1;
+};
+
+const getConjuredItemsUpdatedQuality = (quality, sellIn) => {
+  if (!quality) {
+    return quality;
+  }
+
+  // If the sell in date has passed, decrease the value by 4 otherwise decrease it by 2
+  return sellIn < 0 ? quality - 4 : quality - 2;
+};
 
 const getBackstagePassUpdatedQuality = (quality, sellIn) => {
   // Drop the quality to  0 after the concert
@@ -70,14 +97,4 @@ const getBackstagePassUpdatedQuality = (quality, sellIn) => {
 
   // Increase the quality of the Backstage pass by 1 when there are more than 10 days left until the concert
   return quality + 1;
-};
-
-const getRegularItemUpdatedQuality = (quality, sellIn) => {
-  // If the quality is already 0, do not modify it
-  if (!quality) {
-    return quality;
-  }
-
-  // If the sell in date has passed, decrease the value by 2 otherwise decrease it by 1
-  return sellIn < 0 ? quality - 2 : quality - 1;
 };

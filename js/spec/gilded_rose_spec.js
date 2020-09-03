@@ -58,6 +58,33 @@ describe("Gilded Rose", () => {
     });
   });
 
+  describe("Conjured mana cake", () => {
+    it("should decrease the quality of the Conjured mana cake by 2 as long as the sell in date has not passed", () => {
+      items = [new Item(CONJURED_MANA_CAKE, 2, 4)];
+      update_quality();
+      expect(items[0].name).toEqual(CONJURED_MANA_CAKE);
+      expect(items[0].sell_in).toEqual(1);
+      expect(items[0].quality).toEqual(2);
+    });
+    it("should decrease the quality of the Conjured mana cake by 4 if the sell in date has passed", () => {
+      items = [new Item(CONJURED_MANA_CAKE, 0, 5)];
+      update_quality();
+      expect(items[0].name).toEqual(CONJURED_MANA_CAKE);
+      expect(items[0].sell_in).toEqual(-1);
+      expect(items[0].quality).toEqual(1);
+    });
+    it("should not decrease the quality of the Conjured mana cake below 0", () => {
+      items = [new Item(CONJURED_MANA_CAKE, 1, 6)];
+      update_quality();
+      update_quality();
+      update_quality();
+      update_quality();
+      expect(items[0].name).toEqual(CONJURED_MANA_CAKE);
+      expect(items[0].sell_in).toEqual(-3);
+      expect(items[0].quality).toEqual(0);
+    });
+  });
+
   describe("Backstage passes", () => {
     it("should increase the quality of the Backstage pass by 1 when there are more than 10 days left until the concert", () => {
       items = [new Item(BACKSTAGE_PASS, 12, 1)];
